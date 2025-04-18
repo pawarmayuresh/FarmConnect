@@ -304,13 +304,42 @@
     
     <div class="login-container">
       <div class="auth-toggle">
+        <button class="auth-toggle-btn active" id="signin-toggle">Sign In</button>
         <button class="auth-toggle-btn" id="signup-toggle">Sign Up</button>
       </div>
       
-     
+      <!-- Sign In Form -->
+      <div class="auth-form active" id="signin-form">
+        <h2>Sign In to FarmConnect</h2>
+        <p>Access your farming dashboard and analytics</p>
+        
+        <div class="form-group">
+          <label for="signin-email">Email</label>
+          <input type="email" id="signin-email" placeholder="Your email address">
+        </div>
+        
+        <div class="form-group">
+          <label for="signin-password">Password</label>
+          <input type="password" id="signin-password" placeholder="Your password">
+        </div>
+
+        <div class="error-message" id="signin-error"></div>
+        <div class="loading-spinner" id="signin-loading">Loading...</div>
+        
+        <button class="button" id="signin-btn">Sign In</button>
+        
+        <!-- <div class="auth-options">
+          <button class="button" id="google-signin" style="background-color: #db4437;">Sign in with Google</button>
+          <button class="button" id="facebook-signin" style="background-color: #3b5998;">Sign in with Facebook</button>
+        </div> -->
+        
+        <p style="text-align: center; margin-top: 20px;">
+          <a href="#" id="forgot-password">Forgot Password?</a>
+        </p>
+      </div>
       
       <!-- Sign Up Form -->
-      <div class="auth-form active" id="signup-form">
+      <div class="auth-form" id="signup-form">
         <h2>Create a FarmConnect Account</h2>
         <p>Join our community of modern farmers</p>
         
@@ -352,7 +381,10 @@
         
         <button class="button" id="signup-btn">Create Account</button>
         
-        
+        <!-- <div class="auth-options">
+          <button class="button" id="google-signup" style="background-color: #db4437;">Sign up with Google</button>
+          <button class="button" id="facebook-signup" style="background-color: #3b5998;">Sign up with Facebook</button>
+        </div> -->
       </div>
       
       <!-- Password Reset Form -->
@@ -521,7 +553,7 @@
 
   <!-- Firebase Scripts -->
   <script type="module">
-    // Import the functions you need from the SDKs
+   // Import the functions you need from the SDKs
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { 
   getAuth, 
@@ -532,9 +564,7 @@ import {
   GoogleAuthProvider, 
   FacebookAuthProvider, 
   signInWithPopup, 
-  sendPasswordResetEmail,
-  setPersistence,
-  browserSessionPersistence
+  sendPasswordResetEmail 
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 import { 
   getFirestore, 
@@ -573,15 +603,6 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
-
-// Set persistence to SESSION to avoid issues with persisted auth state
-setPersistence(auth, browserSessionPersistence)
-  .then(() => {
-    console.log("Auth persistence set to SESSION");
-  })
-  .catch((error) => {
-    console.error("Error setting persistence:", error);
-  });
 
 // Global variables
 let currentUser = null;
@@ -734,28 +755,16 @@ signinBtn.addEventListener('click', async () => {
   
   try {
     // Sign in user
-    const userCredential = await signInWithEmailAndPassword(auth, signinEmail.value, signinPassword.value);
-    const user = userCredential.user;
+    await signInWithEmailAndPassword(auth, signinEmail.value, signinPassword.value);
     
-    // Success - explicitly hide loading
+    // Success handled by auth state change
     signinLoading.style.display = 'none';
-    
-    // Clear form fields
-    signinEmail.value = '';
-    signinPassword.value = '';
-    
-    console.log("User signed in successfully:", user.email);
     
   } catch (error) {
-    // Hide loading on error
     signinLoading.style.display = 'none';
     
-    console.error("Sign-in error:", error.code, error.message);
-    
-    // Handle specific errors with clear messages
-    if (error.code === 'auth/invalid-credential' || 
-        error.code === 'auth/user-not-found' || 
-        error.code === 'auth/wrong-password') {
+    // Handle specific errors
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
       signinError.textContent = 'Invalid email or password';
     } else if (error.code === 'auth/too-many-requests') {
       signinError.textContent = 'Too many failed attempts. Try again later';
@@ -806,11 +815,11 @@ resetBtn.addEventListener('click', async () => {
   }
 });
 
-// Social login functionality
-const googleSignin = document.getElementById('google-signin');
-const facebookSignin = document.getElementById('facebook-signin');
-const googleSignup = document.getElementById('google-signup');
-const facebookSignup = document.getElementById('facebook-signup');
+// // Social login functionality
+// const googleSignin = document.getElementById('google-signin');
+// const facebookSignin = document.getElementById('facebook-signin');
+// const googleSignup = document.getElementById('google-signup');
+// const facebookSignup = document.getElementById('facebook-signup');
 
 async function socialSignIn(provider) {
   try {
@@ -836,10 +845,10 @@ async function socialSignIn(provider) {
   }
 }
 
-googleSignin.addEventListener('click', () => socialSignIn(googleProvider));
-facebookSignin.addEventListener('click', () => socialSignIn(facebookProvider));
-googleSignup.addEventListener('click', () => socialSignIn(googleProvider));
-facebookSignup.addEventListener('click', () => socialSignIn(facebookProvider));
+// googleSignin.addEventListener('click', () => socialSignIn(googleProvider));
+// facebookSignin.addEventListener('click', () => socialSignIn(facebookProvider));
+// googleSignup.addEventListener('click', () => socialSignIn(googleProvider));
+// facebookSignup.addEventListener('click', () => socialSignIn(facebookProvider));
 
 // Logout functionality
 const logoutBtn = document.getElementById('logout-btn');
@@ -913,7 +922,7 @@ async function loadUserData() {
         fieldSelect.innerHTML = '';
         
         // Add options based on user's fields
-        const fields = fieldsSnap.data().fields || []; // Added fallback empty array
+        const fields = fieldsSnap.data().fields || [];
         fields.forEach(field => {
           const option = document.createElement('option');
           option.value = field.id;
